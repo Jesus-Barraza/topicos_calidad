@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gráfica 1</title>
+  <style>
+    #comentarios{max-width:820px;margin:12px auto;padding-left:20px;text-align:left;font-family:Verdana,Arial,sans-serif}
+    #comentarios li{margin-bottom:8px;background:#fff;border-radius:6px;padding:8px 10px;border:1px solid rgba(0,0,0,0.06)}
+    @media(max-width:860px){iframe{width:100%;height:auto;min-height:360px}}
+  </style>
+</head>
+<body>
+
+  <h1>En general, ¿Qué opina del proyecto?</h1>
+
+  <p><button id="backToMenu" style="background:#3b33d6;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600">← Regresar a Gráficas</button></p>
+
+  <!-- Inserta aquí la URL del gráfico publicado -->
+  <iframe
+    width="800"
+    height="450"
+    src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQJkn2Q2YQ7Z_PER37h_AJQ9vgp1orcqSCQU6tvgJ_sMy4-oX_-KNGUEuyzkoVBVDiq7TQs_pEKrO86/pubchart?oid=1355434338&format=interactive"
+    frameborder="0"
+    scrolling="no"
+  ></iframe>
+
+  <h2>Comentarios</h2>
+  <ul id="comentarios"></ul>
+
+  <script>
+    const sheetID = "1xHUI8MZXr0D9AbK-Cklti7zoW4W4qeYNw6wxRJP7Pkw";
+    const rango = "AC:AE"; // columnas A, B, C
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json&gid=10175836&range=${rango}`;
+
+    async function cargarComentarios() {
+      try {
+        const res = await fetch(url);
+        const texto = await res.text();
+
+        // Extraer el objeto JSON
+        const match = texto.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('Respuesta inesperada de Google Sheets');
+        const json = JSON.parse(match[0]);
+
+        const filas = (json.table && json.table.rows) ? json.table.rows : [];
+        const lista = document.getElementById("comentarios");
+        lista.innerHTML = "";
+
+        if (filas.length === 0) {
+          lista.innerHTML = '<li>No hay comentarios aún.</li>';
+          return;
+        }
+
+        filas.forEach(fila => {
+          const comentario = fila.c[2]?.v; // columna C (comentarios)
+          if (comentario && comentario.toString().trim() !== '') {
+            const li = document.createElement("li");
+            li.textContent = comentario;
+            lista.appendChild(li);
+          }
+        });
+
+        if (lista.children.length === 0) 
+            lista.innerHTML = '<li>No hay comentarios legibles.</li>';
+
+      } catch (err) {
+        console.error("Error al cargar comentarios:", err);
+        const lista = document.getElementById("comentarios");
+        lista.innerHTML = '<li>Error al cargar comentarios.</li>';
+      }
+    }
+
+    cargarComentarios();
+    setInterval(cargarComentarios, 5000);
+    // Botón para regresar al menú de gráficas
+    document.getElementById('backToMenu').addEventListener('click',()=>{ window.location.href='menu.html'; });
+  </script>
+
+</body>
+</html>
